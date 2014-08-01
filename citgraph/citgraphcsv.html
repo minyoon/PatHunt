@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv = "Content-type" content="text/html; charset=utf-8">
+        <title>Citation Graph</title>
+        <!--script type="text/javascript" src="http://localhost:8000/d3-master/d3.js"></script-->
+        <script type="text/javascript" src="http://mbostock.github.com/d3/d3.js"></script>
+        <script type="text/javascript" src="http://code.jquery.com/jquery-1.8.2.js"></script>
+        <script type="text/javascript" src="http://code.jquery.com/ui/1.9.0/jquery-ui.js"></script>
+        <style type="text/css">
+
+            path.link {
+                fill: none;
+                stroke: #666;
+                stroke-width: 1.5px;
+                /* stroke-dasharray: 0,2 1; */
+            }
+            marker {
+                fill: red;
+            }
+
+            circle {
+                fill: #ccc;
+                stroke: #333;
+                stoke-width: 1.5px;
+            }
+
+            text {
+                font: 10px sans-serif;
+                pointer-events: none;
+            }
+
+            text.shadow {
+                stroke: #fff;
+                stroke-width: 3px;
+                stroke-opacity: .8;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="draggable" class="ui-widget-content" style="float:right;
+            top:60px; right: 60px; z-index:2000;widt:400px; height: 300px; padding:10px;
+            font-size: 10px; font-family:sans-serif;
+            border: 3px solid;
+            background-color:rgba(255,255,255,0.86);
+            ">
+            <form>
+                <div style="font-size:12px; text-align: center;">
+                    <b> Patent Information </b>
+                </div>
+                <hr>
+                <div id="patentpanel" style="margin-left:5px; font-size: 15px;">
+                    <!--- something will be here later -->
+                    <div id="patinfo" style="margin-left:5px; font-size: 15px;">
+                        Click a node to see its information</div>
+                    <b> Inventor Information </b>
+                    <hr>
+                    <div id="invinfo" style="margin-left:5px; font-size: 15px;">
+                        No patent chosen
+                    </div>
+                </div>
+        </div>
+    <script type="text/javascript">
+        $(function() {
+                $( "#draggable" ).draggable();
+                });
+
+        var w = 750;
+        h = 650;
+        links = [];
+        nodes = {};
+            d3.csv("patcitation.csv", function(data) {
+                    data.forEach(function(d) {
+                        links.push({'source': d.source, 'target': d.target});
+                        })
+
+                    links.forEach(function(link) {
+                        link.source = (nodes[link.source] || (nodes[link.source] = {name: link.source, ref:0}));
+                        link.target = (nodes[link.target] || (nodes[link.target] = {name: link.target, ref:0}));
+                        nodes[link.target.name].ref = nodes[link.target.name].ref + 1;
+                        })
+                    })
+            d3.csv("patinfo.csv", function (data) {
+                    data.forEach(function(d) {
+                        node = nodes[d.Patent];
+                    node['GYear'] = d.Gyear;
+                    node['PClass'] = d.PClass;
+                    node['Firstname'] = d.Firstname;
+                    node['Lastname'] = d.Lastname;
+                    node['Street'] = d.Street;
+                    node['State'] = d.State;
+                    node['Country'] = d.Country;
+                    node['Zipcode'] = d.Zipcode;
+                })
+
+
+            var force = d3.layout.force()
+            .nodes(d3.values(nodes))
+            .links(links)
+            .size([w,h])
+            .linkDistance(130)
+            .charge(-150)
+            .on("tick", tick)
+            .start();
+
+            var svg = d3.select("body").append("svg:svg")
+            .attr("width", w)
+            .attr("heigth", h);
+
+            svg.append("svg:defs").append("svg:marker")
+            .attr("id", "end-arrow")
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 15) //15
+            .attr("refY", -1.5) // -1.5
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto")
+            .append("svg:path")
+            .attr("d", "M0, -5L10, 0L0, 5");
+
+        var path = svg.append("svg:g").selectAll("path")
+            .data(force.links())
+            .enter().append("svg:path")
+            .attr("class", "link")
+            .attr("marker-end", "url(#end-arrow)");
+
+        var circle = svg.append("svg:g").selectAll("circle")
+            .data(force.nodes())
+            .enter().append("svg:circle")
+            .attr("r", function(d) {
+                    return 6 + Math.sqrt(d.ref);
+                    })
+        .on("click", function(d) {
+                var pinfo = document.getElementById('patinfo');
+                pinfo.innerHTML='<p>Patent: '+d.name+'</p><p>Grant Year: '+d.GYear+'</p>';
+                if (d.ref == 0) {
+                pinfo.appendChild(document.createTextNode("You chose a leaf"));
+                } else {
+                pinfo.appendChild(document.createTextNode("Referenced by "+d.ref+" patents"));
+                }
+                pinfo = document.getElementById('invinfo');
+                pinfo.innerHTML='<p>Zipcode: '+d.Zipcode+'</p>';
+                })
+        .call(force.drag);
+
+        var text = svg.append("svg:g").selectAll("g")
+            .data(force.nodes())
+            .enter().append("svg:g");
+
+        text.append("svg:text")
+            .attr("x", 8)
+            .attr("y",".31em")
+            .attr("class", "shadow")
+            .text(function(d) {return d.name;});
+
+        text.append("svg:text")
+            .attr("x", 8)
+            .attr("y", ".31em")
+            .text(function(d) {return d.name;});
+
+        function tick() {
+            path.attr("d", function(d) {
+                    var dx = d.target.x - d.source.x,
+                    dy = d.target.y - d.source.x,
+                    dr = Math.sqrt(dx * dx + dy*dy);
+                    return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y;
+                    });
+
+            circle.attr("transform", function(d) {
+                    return "translate(" + d.x + "," + d.y + ")";
+                    });
+            text.attr("transform", function(d) {
+                    return "translate("+d.x+","+d.y+")";
+                    });
+        }
+})
+</script>
+    </body>
+</html>
