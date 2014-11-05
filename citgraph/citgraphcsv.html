@@ -69,7 +69,7 @@
         h = 650;
         links = [];
         nodes = {};
-            d3.csv("patcitation.csv", function(data) {
+            d3.csv("data/patcitation.csv", function(data) {
                     data.forEach(function(d) {
                         links.push({'source': d.source, 'target': d.target});
                         })
@@ -80,7 +80,7 @@
                         nodes[link.target.name].ref = nodes[link.target.name].ref + 1;
                         })
                     })
-            d3.csv("patinfo.csv", function (data) {
+            d3.csv("data/patinfo.csv", function (data) {
                     data.forEach(function(d) {
                         node = nodes[d.Patent];
                     node['GYear'] = d.Gyear;
@@ -105,7 +105,7 @@
 
             var svg = d3.select("body").append("svg:svg")
             .attr("width", w)
-            .attr("heigth", h);
+            .attr("height", h);
 
             svg.append("svg:defs").append("svg:marker")
             .attr("id", "end-arrow")

@@ -5,7 +5,7 @@
 CitGraph is a patent search engine that can be deployed to find relevant patents to the input data. The tool not only describes how patents are related to each other, but also display the information about their primary inventors. 
 
 ## usage
-* To see an example, please see 'citgraph\_example.png'
+* To see an example, please see 'citgraph\_example.png'. This is a screen capture of citgraph.html
 1. Users can interact with the graph with various inputs, such as patent number/class, or inventor/assignee name.
 2. Users can move the patent nodes by clicking on them, and the information box updates its data accordingly.
 
