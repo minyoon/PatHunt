@@ -2,8 +2,8 @@ $(function() {
     $( "#draggable" ).draggable();
 });
 
-var w = 750;
-h = 750;
+var w = 650;
+h = 650;
 links = [];
 nodes = {};
 var data;
@@ -45,7 +45,7 @@ d3.json("data/patinfo.json", function (error, json) {
 
     var svg = d3.select("body").append("svg:svg")
         .attr("width", w)
-        .attr("heigth", h);
+        .attr("height", h);
 
     svg.append("svg:defs").append("svg:marker")
         .attr("id", "end-arrow")
